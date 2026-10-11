@@ -3,31 +3,41 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ramesh Bhaiya's Stall</title>
+<title>Desi Drama Arena</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Mukta:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#fff4dc; --ink:#2b1608; --red:#d7263d; --yellow:#ffc914; --green:#1b998b; --card:#fff; }
+  :root { --bg:#fff4dc; --ink:#2b1608; --red:#d7263d; --yellow:#ffc914; --green:#1b998b; --card:#fff; --accent:var(--yellow); }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font-family:Mukta, system-ui, sans-serif;
          background-image: repeating-linear-gradient(90deg, var(--red) 0 40px, var(--yellow) 40px 80px);
          background-size: 100% 28px; background-repeat:no-repeat; min-height:100vh; }
-  main { max-width:640px; margin:0 auto; padding:56px 16px 32px; }
+  main { max-width:720px; margin:0 auto; padding:56px 16px 32px; }
   h1 { font-family:Bungee, sans-serif; font-size:clamp(28px,7vw,44px); line-height:1; margin:0 0 6px; color:var(--red); text-shadow:3px 3px 0 var(--yellow); }
   .sub { margin:0 0 20px; font-size:18px; }
-  .tag { display:inline-block; background:var(--yellow); border:3px solid var(--ink); padding:4px 12px; font-weight:700; transform:rotate(-2deg); margin-bottom:20px; }
-  .bhaiya { display:flex; align-items:center; gap:16px; margin-bottom:20px; }
-  .face { width:84px; height:84px; border-radius:50%; background:var(--yellow); border:4px solid var(--ink);
-          display:grid; place-items:center; font-size:44px; flex:none; transition:transform .1s; }
+  .modes { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px; margin-bottom:16px; }
+  .mode { text-align:left; font-family:Mukta, sans-serif; font-size:16px; padding:12px; border:3px solid var(--ink); border-radius:12px;
+          background:var(--card); cursor:pointer; box-shadow:4px 4px 0 var(--ink); }
+  .mode .e { font-size:32px; display:block; }
+  .mode b { display:block; font-size:17px; }
+  .mode small { opacity:.75; }
+  .mode[aria-pressed="true"] { background:var(--accent); transform:translate(2px,2px); box-shadow:2px 2px 0 var(--ink); }
+  .mode:disabled { opacity:.4; cursor:not-allowed; }
+  label { font-weight:700; }
+  select { font:inherit; font-size:17px; padding:8px 10px; border:3px solid var(--ink); border-radius:10px; background:var(--card); color:var(--ink); margin-left:8px; }
+  .tag { display:inline-block; background:var(--accent); border:3px solid var(--ink); padding:4px 12px; font-weight:700; transform:rotate(-2deg); margin:18px 0 20px; }
+  .who { display:flex; align-items:center; gap:16px; margin-bottom:20px; }
+  .face { width:84px; height:84px; border-radius:50%; background:var(--accent); border:4px solid var(--ink);
+          display:grid; place-items:center; font-size:44px; flex:none; }
   .face.talking { animation: bob .35s infinite alternate; }
   @keyframes bob { to { transform: scale(1.12) rotate(-4deg); } }
   #state { font-weight:700; font-size:18px; }
-  button { font-family:Bungee, sans-serif; font-size:20px; padding:14px 24px; border:4px solid var(--ink); border-radius:12px;
-           cursor:pointer; box-shadow:5px 5px 0 var(--ink); }
-  button:active { transform:translate(3px,3px); box-shadow:2px 2px 0 var(--ink); }
-  button:disabled { opacity:.45; cursor:not-allowed; }
-  #start { background:var(--green); color:#fff; }
-  #stop { background:var(--red); color:#fff; }
+  .btn { font-family:Bungee, sans-serif; font-size:20px; padding:14px 24px; border:4px solid var(--ink); border-radius:12px;
+         cursor:pointer; box-shadow:5px 5px 0 var(--ink); color:#fff; }
+  .btn:active { transform:translate(3px,3px); box-shadow:2px 2px 0 var(--ink); }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  #start { background:var(--green); }
+  #stop { background:var(--red); }
   .row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:24px; }
   #log { display:flex; flex-direction:column; gap:10px; }
   .msg { max-width:85%; padding:10px 14px; border:3px solid var(--ink); border-radius:14px; font-size:18px; background:var(--card); }
@@ -40,84 +50,117 @@
 </head>
 <body>
 <main>
-  <h1>Ramesh Bhaiya's Stall</h1>
-  <p class="sub">Sarojini Nagar • "100% original" Gucchi shirt</p>
-  <div class="tag">MRP ₹1,200 • Can you beat Bhaiya?</div>
+  <h1>Desi Drama Arena</h1>
+  <p class="sub">Pick your opponent. Argue out loud. Try not to lose.</p>
 
-  <div class="bhaiya">
-    <div class="face" id="face" aria-hidden="true">🧔🏽</div>
-    <div><div id="state">Stall is open. Press start and talk.</div><div id="err" role="alert"></div></div>
+  <div class="modes" id="modes"></div>
+  <label for="lang">Language</label>
+  <select id="lang">
+    <option value="">Agent default</option>
+    <option>Hindi</option><option>English</option><option>Tamil</option><option>Telugu</option>
+    <option>Kannada</option><option>Malayalam</option><option>Bengali</option><option>Marathi</option>
+    <option>Gujarati</option><option>Punjabi</option><option>Odia</option>
+  </select>
+
+  <div><div class="tag" id="tag"></div></div>
+  <div class="who">
+    <div class="face" id="face" aria-hidden="true"></div>
+    <div><div id="state"></div><div id="err" role="alert"></div></div>
   </div>
 
   <div class="row">
-    <button id="start">Start haggling</button>
-    <button id="stop" disabled>Walk away</button>
+    <button class="btn" id="start">Start</button>
+    <button class="btn" id="stop" disabled>Hang up</button>
   </div>
 
   <div id="log" aria-live="polite"></div>
-  <p class="hint">Talk like you would at a real stall. Interrupt him, lowball him, threaten to walk away. Hindi, English or Hinglish all work.</p>
+  <p class="hint">Talk like real life. Interrupt, argue, switch languages mid-sentence. Hinglish, Tanglish, anything works.</p>
 </main>
 
 <script type="module">
 import { ConversationAgent, BrowserAudioInterface, InteractionType, AgentState }
   from "https://cdn.jsdelivr.net/npm/sarvam-conv-ai-sdk@0.0.42/dist/browser.js/+esm";
 
-const $ = (id) => document.getElementById(id);
-const LABELS = {
-  [AgentState.CONNECTING]: "Calling Bhaiya…",
-  [AgentState.CONNECTED]: "Bhaiya is here.",
-  [AgentState.LISTENING]: "Bhaiya is listening… bolo!",
-  [AgentState.SPEAKING]: "Bhaiya is talking…",
-  [AgentState.ERROR]: "Something broke.",
-  [AgentState.IDLE]: "Stall is open. Press start and talk.",
+const MODES = {
+  bhaiya:   { emoji: "🧔🏽", name: "Ramesh Bhaiya", blurb: "Haggle for a fake Gucchi shirt", tag: "MRP ₹1,200 • Can you beat his price?", accent: "#ffc914", start: "Start haggling" },
+  auto:     { emoji: "🛺", name: "Auto Anna", blurb: "Convince him to go by meter", tag: "Koramangala → Whitefield • Meter? Illa saar.", accent: "#9ee493", start: "Hail the auto" },
+  mummy:    { emoji: "👩🏽‍🦱", name: "Mummy", blurb: "Break big news on a call", tag: "Confess something. Survive the guilt trip.", accent: "#ffb3c6", start: "Call Mummy" },
+  landlord: { emoji: "👴🏽", name: "Landlord Uncle", blurb: "Get your deposit back", tag: "Deposit ₹50,000 • He's found 47 'damages'.", accent: "#a0c4ff", start: "Call Uncle" },
 };
-let agent = null;
+const LABELS = {
+  [AgentState.CONNECTING]: "Connecting…",
+  [AgentState.CONNECTED]: "Connected.",
+  [AgentState.LISTENING]: "Listening… bolo!",
+  [AgentState.SPEAKING]: "Talking…",
+  [AgentState.ERROR]: "Something broke.",
+};
+const $ = (id) => document.getElementById(id);
+let cfg, mode, agent = null;
+
+function selectMode(key) {
+  mode = key;
+  const m = MODES[key];
+  document.querySelectorAll(".mode").forEach((b) => b.setAttribute("aria-pressed", b.dataset.key === key));
+  document.documentElement.style.setProperty("--accent", m.accent);
+  $("tag").textContent = m.tag;
+  $("face").textContent = m.emoji;
+  $("start").textContent = m.start;
+  $("state").textContent = `${m.name} is waiting. Press start and talk.`;
+  $("log").replaceChildren();
+}
 
 function add(role, text) {
   const d = document.createElement("div");
   d.className = "msg " + (role === "user" ? "user" : "bot");
-  d.innerHTML = `<b>${role === "user" ? "You" : "Ramesh Bhaiya"}</b>`;
+  d.innerHTML = `<b>${role === "user" ? "You" : MODES[mode].name}</b>`;
   d.append(text);
   $("log").append(d);
   d.scrollIntoView({ behavior: "smooth", block: "end" });
 }
 
+function setBusy(busy) {
+  $("start").disabled = busy;
+  $("stop").disabled = !busy;
+  $("lang").disabled = busy;
+  document.querySelectorAll(".mode").forEach((b) => (b.disabled = busy || !b.dataset.ready));
+}
+
 function setIdle() {
   agent = null;
-  $("start").disabled = false;
-  $("stop").disabled = true;
+  setBusy(false);
   $("face").classList.remove("talking");
-  $("state").textContent = LABELS[AgentState.IDLE];
+  $("state").textContent = `${MODES[mode].name} is waiting. Press start and talk.`;
 }
 
 $("start").onclick = async () => {
   $("err").textContent = "";
-  $("start").disabled = true;
+  $("log").replaceChildren();
+  setBusy(true);
+  const name = MODES[mode].name;
   try {
-    const cfg = await (await fetch("/config.json")).json();
     agent = new ConversationAgent({
       apiKey: cfg.SAMVAAD_API_KEY,
       config: {
         org_id: cfg.ORG_ID,
         workspace_id: cfg.WORKSPACE_ID,
-        app_id: cfg.APP_ID,
+        app_id: cfg["APP_ID_" + mode.toUpperCase()],
         user_identifier: "demo-" + Math.random().toString(36).slice(2, 8),
         user_identifier_type: "custom",
         interaction_type: InteractionType.CALL,
         input_sample_rate: 16000,
         output_sample_rate: 16000,
+        ...($("lang").value && { initial_language_name: $("lang").value }),
       },
       audioInterface: new BrowserAudioInterface(16000),
       stateCallback: (s) => {
-        $("state").textContent = LABELS[s] ?? s;
+        $("state").textContent = s === AgentState.SPEAKING ? `${name} is talking…` : LABELS[s] ?? $("state").textContent;
         $("face").classList.toggle("talking", s === AgentState.SPEAKING);
       },
       transcriptCallback: async (m) => add(String(m.role).toLowerCase(), m.content),
       endCallback: async () => setIdle(),
     });
     await agent.start();
-    if (!(await agent.waitForConnect(10))) throw new Error("Bhaiya didn't pick up (connection timed out).");
-    $("stop").disabled = false;
+    if (!(await agent.waitForConnect(10))) throw new Error(`${name} didn't pick up (connection timed out).`);
   } catch (e) {
     console.error(e);
     $("err").textContent = e.message || String(e);
@@ -130,6 +173,24 @@ $("stop").onclick = async () => {
   await agent?.stop().catch(console.error);
   setIdle();
 };
+
+try {
+  cfg = await (await fetch("/config.json")).json();
+} catch {
+  cfg = {};
+  $("err").textContent = "Couldn't load config. Is server.py running?";
+}
+for (const [key, m] of Object.entries(MODES)) {
+  const b = document.createElement("button");
+  b.className = "mode";
+  b.dataset.key = key;
+  if (cfg["APP_ID_" + key.toUpperCase()]) b.dataset.ready = "1";
+  b.disabled = !b.dataset.ready;
+  b.innerHTML = `<span class="e" aria-hidden="true">${m.emoji}</span><b>${m.name}</b><small>${b.dataset.ready ? m.blurb : "Coming soon"}</small>`;
+  b.onclick = () => selectMode(key);
+  $("modes").append(b);
+}
+selectMode(Object.keys(MODES).find((k) => cfg["APP_ID_" + k.toUpperCase()]) || "bhaiya");
 </script>
 </body>
 </html>

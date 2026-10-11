@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent
 ENV = dict(l.split("=", 1) for l in (ROOT / ".env").read_text().split() if "=" in l)
-KEYS = ["SAMVAAD_API_KEY", "ORG_ID", "WORKSPACE_ID", "APP_ID"]
+KEYS = ["SAMVAAD_API_KEY", "ORG_ID", "WORKSPACE_ID"] + [k for k in ENV if k.startswith("APP_ID_")]
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -27,5 +27,6 @@ if __name__ == "__main__":
     missing = [k for k in KEYS if not ENV.get(k)]
     if missing:
         print("Missing in .env:", ", ".join(missing))
+    print("Modes enabled:", ", ".join(k[7:].lower() for k in KEYS if k.startswith("APP_ID_")) or "none")
     print("Open http://localhost:8000")
     HTTPServer(("127.0.0.1", 8000), lambda *a: Handler(*a, directory=str(ROOT))).serve_forever()
