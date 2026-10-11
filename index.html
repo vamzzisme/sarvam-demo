@@ -81,10 +81,13 @@
 import { ConversationAgent, BrowserAudioInterface, InteractionType, AgentState }
   from "https://cdn.jsdelivr.net/npm/sarvam-conv-ai-sdk@0.0.42/dist/browser.js/+esm";
 
+// IDs are not secret; the API key lives server-side behind /api/ (server.py locally, netlify/functions/api.mjs in prod)
+const ORG_ID = "01a12acd-c257-7433-9eb4-05fe46b41332";
+const WORKSPACE_ID = "01a12acd-c25d-7945-83d2-502f8b0f8f76";
 const MODES = {
-  bhaiya:   { emoji: "🧔🏽", name: "Ramesh Bhaiya", blurb: "Haggle for a fake Gucchi shirt", tag: "MRP ₹1,200 • Can you beat his price?", accent: "#ffc914", start: "Start haggling" },
-  auto:     { emoji: "🛺", name: "Auto Anna", blurb: "Convince him to go by meter", tag: "Koramangala → Whitefield • Meter? Illa saar.", accent: "#9ee493", start: "Hail the auto" },
-  mummy:    { emoji: "👩🏽‍🦱", name: "Mummy", blurb: "Break big news on a call", tag: "Confess something. Survive the guilt trip.", accent: "#ffb3c6", start: "Call Mummy" },
+  bhaiya:   { app: "shopkeeper--295abc23-19fe", emoji: "🧔🏽", name: "Ramesh Bhaiya", blurb: "Haggle for a fake Gucchi shirt", tag: "MRP ₹1,200 • Can you beat his price?", accent: "#ffc914", start: "Start haggling" },
+  auto:     { app: "Conversatio-cb043ee2-97f7", emoji: "🛺", name: "Auto Anna", blurb: "Convince him to go by meter", tag: "Koramangala → Whitefield • Meter? Illa saar.", accent: "#9ee493", start: "Hail the auto" },
+  mummy:    { app: "Conversatio-25811fa3-2878", emoji: "👩🏽‍🦱", name: "Mummy", blurb: "Break big news on a call", tag: "Confess something. Survive the guilt trip.", accent: "#ffb3c6", start: "Call Mummy" },
 };
 const LABELS = {
   [AgentState.CONNECTING]: "Connecting…",
@@ -94,7 +97,7 @@ const LABELS = {
   [AgentState.ERROR]: "Something broke.",
 };
 const $ = (id) => document.getElementById(id);
-let cfg, mode, agent = null;
+let mode, agent = null;
 
 function selectMode(key) {
   mode = key;
@@ -121,7 +124,7 @@ function setBusy(busy) {
   $("start").disabled = busy;
   $("stop").disabled = !busy;
   $("lang").disabled = busy;
-  document.querySelectorAll(".mode").forEach((b) => (b.disabled = busy || !b.dataset.ready));
+  document.querySelectorAll(".mode").forEach((b) => (b.disabled = busy));
 }
 
 function setIdle() {
@@ -138,11 +141,12 @@ $("start").onclick = async () => {
   const name = MODES[mode].name;
   try {
     agent = new ConversationAgent({
-      apiKey: cfg.SAMVAAD_API_KEY,
+      apiKey: "server-side",
+      baseUrl: new URL("/api/", location.href).href,
       config: {
-        org_id: cfg.ORG_ID,
-        workspace_id: cfg.WORKSPACE_ID,
-        app_id: cfg["APP_ID_" + mode.toUpperCase()],
+        org_id: ORG_ID,
+        workspace_id: WORKSPACE_ID,
+        app_id: MODES[mode].app,
         user_identifier: "demo-" + Math.random().toString(36).slice(2, 8),
         user_identifier_type: "custom",
         interaction_type: InteractionType.CALL,
@@ -173,23 +177,15 @@ $("stop").onclick = async () => {
   setIdle();
 };
 
-try {
-  cfg = await (await fetch("/config.json")).json();
-} catch {
-  cfg = {};
-  $("err").textContent = "Couldn't load config. Is server.py running?";
-}
 for (const [key, m] of Object.entries(MODES)) {
   const b = document.createElement("button");
   b.className = "mode";
   b.dataset.key = key;
-  if (cfg["APP_ID_" + key.toUpperCase()]) b.dataset.ready = "1";
-  b.disabled = !b.dataset.ready;
-  b.innerHTML = `<span class="e" aria-hidden="true">${m.emoji}</span><b>${m.name}</b><small>${b.dataset.ready ? m.blurb : "Coming soon"}</small>`;
+  b.innerHTML = `<span class="e" aria-hidden="true">${m.emoji}</span><b>${m.name}</b><small>${m.blurb}</small>`;
   b.onclick = () => selectMode(key);
   $("modes").append(b);
 }
-selectMode(Object.keys(MODES).find((k) => cfg["APP_ID_" + k.toUpperCase()]) || "bhaiya");
+selectMode("bhaiya");
 </script>
 </body>
 </html>
